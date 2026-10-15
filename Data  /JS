@@ -1,0 +1,154 @@
+const exerciseGroups = {
+  chest: {
+    name: "Chest",
+    muscles: "pectorals, front deltoids, triceps",
+    exercises: [
+      [
+        "Barbell bench press",
+        "Chest, front shoulders, triceps",
+        "4 × 6-10",
+        "Lie on the bench with eyes under the bar, feet flat, shoulder blades pinched together.|Lower the bar to mid-chest with elbows about 45° from the torso.|Press up until the arms are straight, wrists stacked over elbows.",
+      ],
+      [
+        "Incline dumbbell press",
+        "Upper chest, front shoulders, triceps",
+        "3 × 8-12",
+        "Set the bench to 30° and hold the dumbbells at shoulder height, palms forward.|Press up and slightly inward until the arms are extended.|Lower for 2 to 3 seconds until the elbows pass the bench line.",
+      ],
+      [
+        "Push-up",
+        "Chest, triceps, core",
+        "3 × 10-20",
+        "Place hands slightly wider than shoulders, body straight from head to heels.|Lower the chest to a few centimeters above the floor.|Push up to full lockout without letting the hips sag.",
+      ],
+    ],
+  },
+  back: {
+    name: "Back",
+    muscles: "latissimus dorsi, rhomboids, rear deltoids, biceps",
+    exercises: [
+      [
+        "Pull-up",
+        "Lats, biceps, upper back",
+        "4 × 5-10",
+        "Grip the bar just outside shoulder width and hang with shoulders pulled down.|Drive the elbows toward the hips until the chin clears the bar.|Lower under control to a full hang.",
+      ],
+      [
+        "Bent-over barbell row",
+        "Lats, rhomboids, rear delts, lower back",
+        "4 × 6-10",
+        "Hinge at the hips until the torso is near 45°, back flat, bar below the knees.|Pull the bar to the lower ribs and squeeze the shoulder blades together.|Lower slowly without rounding the back.",
+      ],
+      [
+        "Lat pulldown",
+        "Lats, biceps",
+        "3 × 10-12",
+        "Sit with thighs secured under the pad, grip slightly wider than shoulders.|Lean back a few degrees and pull the bar to the upper chest.|Return the bar until the arms are fully extended.",
+      ],
+    ],
+  },
+  shoulders: {
+    name: "Shoulders",
+    muscles: "front, side and rear deltoids, upper trapezius",
+    exercises: [
+      [
+        "Standing overhead press",
+        "Front and side delts, triceps, core",
+        "4 × 5-8",
+        "Hold the bar at collarbone height with glutes and abs tight.|Press straight up, moving the head through once the bar passes the forehead.|Lock out overhead, then lower to the collarbone.",
+      ],
+      [
+        "Dumbbell lateral raise",
+        "Side delts",
+        "3 × 12-15",
+        "Stand with a slight elbow bend and dumbbells at your sides.|Raise the arms out to shoulder height, leading with the elbows.|Lower over 2 to 3 seconds without swinging the torso.",
+      ],
+      [
+        "Face pull",
+        "Rear delts, upper back",
+        "3 × 12-20",
+        "Set a cable at upper-chest height with a rope attachment.|Pull the rope toward the face with elbows high and wide.|Pause with hands beside the ears, then return slowly.",
+      ],
+    ],
+  },
+  arms: {
+    name: "Arms",
+    muscles: "biceps, triceps, brachialis, forearms",
+    exercises: [
+      [
+        "Barbell curl",
+        "Biceps",
+        "3 × 8-12",
+        "Stand with elbows pinned to your sides, palms up.|Curl the bar to shoulder height without moving the elbows forward.|Lower fully over 2 to 3 seconds.",
+      ],
+      [
+        "Triceps rope pushdown",
+        "Triceps",
+        "3 × 10-15",
+        "Stand at a high cable with elbows tucked at your sides.|Extend the arms down and spread the rope at the bottom.|Return until the forearms are just past parallel to the floor.",
+      ],
+      [
+        "Hammer curl",
+        "Biceps, brachialis, forearms",
+        "3 × 10-12",
+        "Hold dumbbells with palms facing each other.|Curl up while keeping the elbows fixed beside the torso.|Lower with control and repeat without swinging.",
+      ],
+    ],
+  },
+  core: {
+    name: "Core",
+    muscles: "rectus abdominis, obliques, transverse abdominis, hip flexors",
+    exercises: [
+      [
+        "Plank",
+        "Abdominals, obliques, shoulders",
+        "3 × 30-60 s",
+        "Place forearms on the floor with elbows under the shoulders.|Squeeze glutes and abs so the body forms a straight line.|Breathe steadily; do not let the hips sag or rise.",
+      ],
+      [
+        "Hanging knee raise",
+        "Lower abs, hip flexors",
+        "3 × 8-15",
+        "Hang from a bar with shoulders engaged.|Curl the pelvis up and bring the knees toward the chest.|Lower slowly without swinging.",
+      ],
+      [
+        "Dead bug",
+        "Deep abs, hip flexors",
+        "3 × 8 per side",
+        "Lie on your back with arms up and knees bent 90° over the hips.|Lower the opposite arm and leg while pressing the lower back into the floor.|Return to the start and alternate sides.",
+      ],
+    ],
+  },
+  legs: {
+    name: "Legs",
+    muscles: "quadriceps, hamstrings, glutes, calves",
+    exercises: [
+      [
+        "Barbell back squat",
+        "Quads, glutes, hamstrings, core",
+        "4 × 5-8",
+        "Rest the bar on the upper back, feet shoulder-width, toes slightly out.|Brace the core and sit down and back until the thighs are parallel.|Drive through the mid-foot to stand, knees tracking over the toes.",
+      ],
+      [
+        "Romanian deadlift",
+        "Hamstrings, glutes, lower back",
+        "3 × 8-10",
+        "Hold a bar at the thighs with knees slightly bent.|Push the hips back and slide the bar down the legs, back flat.|Stop at a full hamstring stretch, then drive the hips forward.",
+      ],
+      [
+        "Walking lunge",
+        "Quads, glutes, hamstrings",
+        "3 × 10 per leg",
+        "Step forward into a long stride, torso upright.|Lower until both knees reach about 90°.|Push through the front heel and step into the next lunge.",
+      ],
+    ],
+  },
+};
+const zoneShapes = {
+  shoulders: '<circle cx="66" cy="64" r="14"/><circle cx="134" cy="64" r="14"/>',
+  chest: '<rect x="78" y="56" width="44" height="34" rx="8"/>',
+  back: '<path d="M69 80l8 4v32l-8-14z"/><path d="M131 80l-8 4v32l8-14z"/>',
+  arms: '<rect x="45" y="82" width="15" height="64" rx="7"/><rect x="140" y="82" width="15" height="64" rx="7"/>',
+  core: '<rect x="80" y="94" width="40" height="46" rx="8"/>',
+  legs: '<rect x="76" y="146" width="21" height="98" rx="10"/><rect x="103" y="146" width="21" height="98" rx="10"/>',
+};
