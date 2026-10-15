@@ -1,0 +1,303 @@
+const $ = (s) => document.querySelector(s),
+  $$ = (s) => [...document.querySelectorAll(s)],
+  round = Math.round,
+  formatNumber = (n) => round(n).toLocaleString("en-US"),
+  escapeHtml = (s) =>
+    String(s).replace(
+      /[&<>"]/g,
+      (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+    );
+const bodyMapSvg =
+  '<svg viewBox="0 0 200 256" role="group" aria-label="Muscle groups"><circle class="hd" cx="100" cy="26" r="14"/><rect class="hd" x="93" y="40" width="14" height="12" rx="4"/>' +
+  Object.keys(zoneShapes)
+    .map(
+      (k) =>
+        `<g class="z" data-g="${k}" tabindex="0" role="button" aria-label="${exerciseGroups[k].name} exercises"><title>${exerciseGroups[k].name}</title>${zoneShapes[k]}</g>`,
+    )
+    .join("") +
+  "</svg>";
+let currentGroup = "chest",
+  currentPage = "";
+function show(p) {
+  if (!["home", "exercises", "nutrition"].includes(p)) p = "home";
+  $$(".pg").forEach((s) => (s.hidden = s.id !== p));
+  $$(".lk").forEach((a) => a.classList.toggle("cur", a.dataset.p === p));
+  if (p !== currentPage) scrollTo(0, 0);
+  currentPage = p;
+}
+function go(p) {
+  try {
+    location.hash = p;
+  } catch (e) {}
+  show(p);
+}
+function draw() {
+  const g = exerciseGroups[currentGroup];
+  $("#gt").textContent = g.name;
+  $("#gm").textContent = "Muscles worked: " + g.muscles + ".";
+  $("#cap").textContent = g.exercises.length + " exercises for " + g.name.toLowerCase();
+  $$(".z").forEach((z) => z.classList.toggle("on", z.dataset.g === currentGroup));
+  $$("#chips button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.g === currentGroup));
+  $("#list").innerHTML = g.exercises
+    .map(
+      ([name, muscles, setsReps, steps]) =>
+        `<details class="dx"><summary><span><b>${name}</b><small>${muscles}</small></span><em>${setsReps}<small> sets × reps</small></em></summary><ol>${steps
+          .split("|")
+          .map((s) => `<li>${s}</li>`)
+          .join("")}</ol></details>`,
+    )
+    .join("");
+}
+function pick(g) {
+  currentGroup = g;
+  draw();
+  go("exercises");
+}
+$("#m1").innerHTML = $("#m2").innerHTML = bodyMapSvg;
+$("#chips").innerHTML = Object.keys(exerciseGroups)
+  .map((k) => `<button data-g="${k}">${exerciseGroups[k].name}</button>`)
+  .join("");
+const storage = (k, v) => {
+  try {
+    return v === undefined
+      ? JSON.parse(localStorage.getItem(k))
+      : localStorage.setItem(k, JSON.stringify(v));
+  } catch (e) {
+    return null;
+  }
+};
+const todayKey = "f_l_" + new Date().toLocaleDateString("en-CA"),
+  formFieldIds = ["sx", "ag", "ht", "wt", "ac", "gl"];
+let profile = storage("f_p"),
+  log = storage(todayKey) || [],
+  mealImage = null,
+  detectedItems = [];
+function calc() {
+  const a = +$("#ag").value,
+    h = +$("#ht").value,
+    w = +$("#wt").value,
+    m = $("#sx").value == "m",
+    e = $("#cr");
+  if (!(a >= 14 && a <= 90 && h >= 120 && h <= 230 && w >= 35 && w <= 250)) {
+    e.className = "err";
+    e.textContent = "Check your entries: age 14-90, height 120-230 cm, weight 35-250 kg.";
+    return;
+  }
+  const bmr = 10 * w + 6.25 * h - 5 * a + (m ? 5 : -161),
+    td = bmr * $("#ac").value,
+    fl = m ? 1500 : 1200,
+    raw = td + Number($("#gl").value),
+    lim = round(Math.max(fl, raw)),
+    p = round(1.8 * w),
+    fa = round((lim * 0.25) / 9);
+  e.className = raw < fl ? "mu" : "err";
+  e.textContent =
+    raw < fl
+      ? "The goal-based value was below the minimum safe intake, so the limit is set to " +
+        formatNumber(fl) +
+        " kcal."
+      : "";
+  profile = {
+    bmr,
+    td,
+    lim,
+    p,
+    f: fa,
+    c: Math.max(0, round((lim - p * 4 - fa * 9) / 4)),
+    i: formFieldIds.map((i) => $("#" + i).value),
+  };
+  storage("f_p", profile);
+  $("#cal").open = false;
+  render();
+}
+function render() {
+  const T = log.reduce((s, x) => ({ k: s.k + x.k, p: s.p + x.p, c: s.c + x.c, f: s.f + x.f }), {
+      k: 0,
+      p: 0,
+      c: 0,
+      f: 0,
+    }),
+    lim = profile ? profile.lim : 0,
+    left = lim - T.k,
+    over = !!profile && left < 0,
+    C = 326.7,
+    r = $("#rg");
+  r.style.strokeDasharray = C;
+  r.style.strokeDashoffset = lim ? C * (1 - Math.min(1, T.k / lim)) : C;
+  r.classList.toggle("over", over);
+  $("#rem").textContent = profile ? formatNumber(Math.abs(left)) : "-";
+  $("#rl").textContent = profile ? (over ? "kcal over limit" : "kcal remaining") : "no limit set";
+  $("#st").className = "st" + (over ? " bad" : "");
+  $("#st").textContent = !profile
+    ? "Calculate your daily limit to start tracking."
+    : over
+      ? `Limit exceeded by ${formatNumber(-left)} kcal. Return to your regular limit tomorrow and do not compensate by skipping meals.`
+      : left < lim * 0.15
+        ? `Close to the limit: ${formatNumber(left)} kcal left today.`
+        : `On track: ${formatNumber(T.k)} of ${formatNumber(lim)} kcal eaten.`;
+  ["p", "c", "f"].forEach((k) => {
+    $("#t" + k).textContent = round(T[k]) + " / " + (profile ? profile[k] : "-") + " g";
+    $("#b" + k).style.width =
+      profile && profile[k] ? Math.min(100, (T[k] / profile[k]) * 100) + "%" : "0";
+  });
+  $("#cs").textContent = profile
+    ? "Daily limit: " + formatNumber(profile.lim) + " kcal. Edit details"
+    : "Your details";
+  $("#out").innerHTML = profile
+    ? `<dt>Basal metabolism</dt><dd>${formatNumber(profile.bmr)} kcal</dd><dt>Maintenance</dt><dd>${formatNumber(profile.td)} kcal</dd><dt>Daily limit</dt><dd>${formatNumber(profile.lim)} kcal</dd>`
+    : "";
+  $("#lg").innerHTML = log.length
+    ? log
+        .map(
+          (x, i) =>
+            `<li><div><b>${escapeHtml(x.n)}</b><small>${x.t}. Protein ${round(x.p)} g, carbs ${round(x.c)} g, fat ${round(x.f)} g</small></div><span>${formatNumber(x.k)} kcal</span><button data-d="${i}" aria-label="Remove ${escapeHtml(x.n)}">Remove</button></li>`,
+        )
+        .join("")
+    : '<li class="mu">No meals logged today. Add a photo or enter a meal manually.</li>';
+}
+function add(items) {
+  const t = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  items.forEach((x) => log.push({ ...x, t }));
+  storage(todayKey, log);
+  render();
+}
+function shrink(file) {
+  return new Promise((ok, no) => {
+    const r = new FileReader();
+    r.onerror = no;
+    r.onload = () => {
+      const i = new Image();
+      i.onerror = no;
+      i.onload = () => {
+        const s = Math.min(1, 1024 / Math.max(i.width, i.height)),
+          c = document.createElement("canvas");
+        c.width = Math.round(i.width * s);
+        c.height = Math.round(i.height * s);
+        c.getContext("2d").drawImage(i, 0, 0, c.width, c.height);
+        c.toBlob(
+          (b) => (b ? ok({ b, u: c.toDataURL("image/jpeg", 0.82) }) : no()),
+          "image/jpeg",
+          0.82,
+        );
+      };
+      i.src = r.result;
+    };
+    r.readAsDataURL(file);
+  });
+}
+const mealPrompt =
+  'Analyze this meal photo. List each distinct food or drink visible, estimate its portion size and its nutrition for that portion. Reply with JSON only: {"confidence":"low|medium|high","items":[{"name":string,"portion":string,"kcal":number,"protein":number,"carbs":number,"fat":number}]}. Protein, carbs and fat are in grams. If the image shows no food, return {"confidence":"low","items":[]}.';
+$("#ph").onchange = (e) => {
+  const fl = e.target.files[0];
+  if (!fl) return;
+  shrink(fl)
+    .then((x) => {
+      mealImage = x.b;
+      $("#pv").src = x.u;
+      $("#pa").hidden = false;
+      $("#res").innerHTML = "";
+      $("#ps").textContent = "";
+      $("#dt").textContent = "Photo selected. Choose another to replace it.";
+    })
+    .catch(() => {
+      $("#dt").textContent = "This file could not be read as an image. Choose another.";
+    });
+};
+$("#an").onclick = async () => {
+  const s = $("#ps"),
+    b = $("#an");
+  if (!mealImage) return;
+  s.textContent = "Analyzing the photo...";
+  b.disabled = true;
+  $("#res").innerHTML = "";
+  try {
+    const sm = await claude.use("sample"),
+      lim = sm && sm.limits ? await sm.limits() : {};
+    if (!sm || !lim.images) throw { code: "na" };
+    const r = await sm.json(mealPrompt, { images: [mealImage], modelTier: "default" });
+    detectedItems = (r.items || []).map((x) => ({
+      n: String(x.name || "Food"),
+      pt: String(x.portion || ""),
+      k: Math.max(0, +x.kcal || 0),
+      p: +x.protein || 0,
+      c: +x.carbs || 0,
+      f: +x.fat || 0,
+    }));
+    if (!detectedItems.length) {
+      s.textContent = "No food was detected. Use a clearer photo or enter the meal manually.";
+      return;
+    }
+    s.textContent = "";
+    $("#res").innerHTML =
+      `<p class="mu">Estimated from the photo (${escapeHtml(r.confidence || "medium")} confidence). Correct any value before adding.</p>` +
+      detectedItems
+        .map(
+          (x, i) =>
+            `<div class="rw"><span><b>${escapeHtml(x.n)}</b><small>${escapeHtml(x.pt)}</small></span><label>kcal<input type="number" min="0" data-i="${i}" value="${round(x.k)}"></label></div>`,
+        )
+        .join("") +
+      '<button class="btn" id="ad">Add to today\'s log</button>';
+  } catch (e) {
+    s.textContent =
+      e.code == "not_granted"
+        ? "Permission to analyze photos was declined. Enter the meal manually below."
+        : e.code == "rate_limited"
+          ? "Too many requests. Wait a minute and try again."
+          : "Photo analysis is unavailable right now. Enter the meal manually below.";
+  } finally {
+    b.disabled = false;
+  }
+};
+$("#ma").onclick = () => {
+  const n = $("#mn").value.trim(),
+    k = +$("#mk").value;
+  if (!n || !(k > 0)) return;
+  add([{ n, k, p: 0, c: 0, f: 0 }]);
+  $("#mn").value = $("#mk").value = "";
+};
+$("#go").onclick = calc;
+document.addEventListener("click", (e) => {
+  const t = e.target,
+    a = t.closest("[data-p]"),
+    z = t.closest(".z"),
+    c = t.closest("#chips button"),
+    d = t.closest("[data-d]");
+  if (a) {
+    e.preventDefault();
+    go(a.dataset.p);
+  } else if (z) pick(z.dataset.g);
+  else if (c) pick(c.dataset.g);
+  else if (d) {
+    log.splice(+d.dataset.d, 1);
+    storage(todayKey, log);
+    render();
+  } else if (t.id == "ad") {
+    add(
+      detectedItems.map((x, i) => {
+        const v = +$(`#res input[data-i="${i}"]`).value || 0,
+          q = x.k ? v / x.k : 1;
+        return { n: x.n + (x.pt ? ` (${x.pt})` : ""), k: v, p: x.p * q, c: x.c * q, f: x.f * q };
+      }),
+    );
+    $("#res").innerHTML = "";
+    $("#pa").hidden = true;
+    mealImage = null;
+    $("#ph").value = "";
+    $("#dt").textContent = "Choose or take a photo of your meal";
+  }
+});
+document.addEventListener("keydown", (e) => {
+  const z = e.target.closest && e.target.closest(".z");
+  if (z && (e.key == "Enter" || e.key == " ")) {
+    e.preventDefault();
+    pick(z.dataset.g);
+  }
+});
+addEventListener("hashchange", () => show(location.hash.slice(1)));
+if (profile && profile.i) {
+  profile.i.forEach((v, j) => ($("#" + formFieldIds[j]).value = v));
+  $("#cal").open = false;
+}
+show(location.hash.slice(1));
+draw();
+render();
